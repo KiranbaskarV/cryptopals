@@ -1,32 +1,16 @@
-from util.score import score_string
+from util.xor import break_single_byte_xor
 
-strings = open('data/4.txt', 'r').read().split()
+with open('data/4.txt', 'r') as f:
+    strings = f.read().split()
 
-max_scores = []
-for i in range(len(strings)):
-    max_score = 0
-    max_score_byte = 0
-    decrypted_string = ""
+results = []
+for i, hex_string in enumerate(strings):
+    encrypted_bytes = bytes.fromhex(hex_string)
+    key_byte, plaintext, score = break_single_byte_xor(encrypted_bytes)
+    results.append((plaintext, score, key_byte, i))
 
-    encrypted_bytes = bytes.fromhex(strings[i])
+plaintext, _, key_byte, line_num = max(results, key=lambda p: p[1])
 
-    for byte in range(256):
-        decryption_guess = b""
-        for enc_byte in encrypted_bytes:
-            decryption_guess += (byte ^ enc_byte).to_bytes(1,'big')
-
-        score = score_string(decryption_guess.decode(errors='ignore'))
-
-        if score > max_score:
-            max_score = score
-            max_score_byte = byte
-            decrypted_string = decryption_guess.decode(errors='ignore')
-    
-    max_scores.append((decrypted_string, max_score, max_score_byte, i))
-
-
-decrypted_string, _, max_score_byte, ind = max(max_scores, key=lambda p:p[1])
-print("The encrypted message was", strings[i], "at line", i+1)
-print("The key was", hex(max_score_byte))
-print("The decrypted message is", decrypted_string)
-
+print("The encrypted message was", strings[line_num], "at line", line_num + 1)
+print("The key was", hex(key_byte))
+print("The decrypted message is", plaintext)
